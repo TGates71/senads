@@ -1,0 +1,90 @@
+<!--
+/**
+	* User Interface Script for SenAds module
+	* Version : 1.2.0
+	* Author : TGates
+	* For Sentora v2.0.0 http://www.sentora.org
+	* License http://www.gnu.org/licenses/gpl-3.0.html GPLv3
+ */
+-->
+
+<@ Init @>
+<div class="zmodule_content panel" id="zmodule_header_<@ ModuleName @>">
+	<div class="panel-heading"> <img src="<@ ModuleIcon @>" width="35" height="35" border="0" alt="<@ ModuleName @>">
+		<div class="zmodule_title">
+			<@ ModuleName @><span class="zmodule_desc"><@ ModuleVersion @></span>
+		</div>
+		<div class="zmodule_desc" id="zmodule_desc_<@ ModuleName @>">
+			<@ ModuleDesc @>
+				<!-- Check for updates -->
+				<% if CheckUpdate %>
+					<p>&nbsp;</p>
+					<font color="red" size="3"><b><: New Version Available :></b></font>
+				<% endif %>
+		</div>
+	</div>
+	<@ Result @>
+			
+	<% if CreateDefault %>
+		<@ CreateDefault @>
+		<p></p>
+	<% else %>
+		<@ ImageEncodingInfo @>
+		<div class="zgrid_wrapper panel">
+			<!-- Nav tabs -->
+			<ul class="nav nav-tabs section-tabs">
+				<li><a href="#EditBanner" data-toggle="tab"><: Edit Banner Ad :></a></li>
+				<li><a href="#ImageEncode" data-toggle="tab"><: Encode an Image :></a></li>
+				<li><a href="#pkgForm" data-toggle="tab"><: Settings :></a></li>
+				<% if Admin %>
+				<li><a href="#zadmin" data-toggle="tab"><: Zadmin Control :></a></li>
+				<% endif %>
+			</ul>
+			<!-- Nav content -->
+			<div class="tab-content">
+				<div class="tab-pane active" id="EditBanner">
+					<@ BannerRules @>
+					<@ EditAdvert @>
+				</div>
+				<div class="tab-pane" id="ImageEncode" >
+					<@ UploadImage @>
+				</div>
+				<div class="tab-pane" id="pkgForm">
+					<@ EnableDisableForm @>
+				</div>
+			<% if Admin %>
+				<div class="tab-pane" id="zadmin">
+					<div class="zgrid_wrapper">
+						<@ AdminMenu @>
+					</div>
+				</div>
+			<% endif %>
+			</div>
+		</div>
+	<% endif %>
+	<!-- copyright -->
+	<div>
+		<@ Copyright @>
+		<@ Donation @>
+	</div>
+</div>
+<!-- Copy text area to clipboard -->
+<script>
+	copyTextBtn = document.querySelector('#copyTextBtn');
+	copyTextBtn.addEventListener('click', function(event)
+	{
+		let copyTextarea = document.querySelector('#copytextarea');
+		copyTextarea.focus();
+		copyTextarea.select();
+		try
+		{
+			let successful = document.execCommand('copy');
+			let msg = successful ? 'successful' : 'unsuccessful';
+			alert('Copy text command was ' + msg);
+		}
+			catch(err)
+		{
+		alert('Unable to copy');
+		}
+	});
+</script>

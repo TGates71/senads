@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updateserver>
+	<latestversion>120</latestversion>
+	<downloadurl>https://zppy-repo.mach-hosting.com/repo/senads.zpp</downloadurl>
+	<desc>Add an Advertisement or Banner to the top of your client's pages. Very useful for free hosting services, sposorship, or notifying of server maintenance.</desc>
+	<updatedesc>Added Image Encoding</updatedesc>
+	<senversion>2.0.0</senversion>
+	<authorname>TGates</authorname>
+	<authoremail>tgates@sentora.org</authoremail>
+	<authorurl>http://www.sentora.org</authorurl>
+	<ostype>all</ostype>
+</updateserver>

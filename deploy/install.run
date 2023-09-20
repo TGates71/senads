@@ -1,0 +1,60 @@
+<?php
+/**
+	* Install Script for SenAds module
+	* Version : 1.2.0
+	* Author : TGates
+	* For Sentora v2.0.0 http://www.sentora.org
+	* License http://www.gnu.org/licenses/gpl-3.0.html GPLv3
+ */
+ 
+require_once('cnf/db.php');
+require_once('dryden/db/driver.class.php');
+require_once('dryden/debug/logger.class.php');
+require_once('dryden/runtime/dataobject.class.php');
+require_once('dryden/sys/versions.class.php');
+require_once('dryden/ctrl/options.class.php');
+require_once('dryden/ctrl/auth.class.php');
+require_once('dryden/ctrl/users.class.php');
+require_once('dryden/fs/director.class.php');
+require_once('dryden/fs/filehandler.class.php');
+require_once('inc/dbc.inc.php');
+
+function installModule()
+{
+	global $zdbh, $controller;
+
+	$sql = "
+		CREATE TABLE x_senads (
+			sa_id_in INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+			sa_rid_in int DEFAULT NULL,
+			sa_pid_in int DEFAULT NULL,
+			sa_enabled_in int DEFAULT NULL
+		) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+		ALTER TABLE x_senads ADD UNIQUE KEY sa_pid_in (sa_pid_in);";
+		
+    $stmt = $zdbh->prepare($sql);
+	$stmt->execute();
+	
+	# close connect to prevent buffering error
+	$stmt = null;
+	
+	# path to add to open_basedir
+	$addPath = ":" . ctrl_options::GetSystemOption('sentora_root') . "modules/senads/pages/";
+
+	# get openbase_temp DB values
+	$getOBD = $zdbh->prepare("SELECT so_value_tx FROM x_settings WHERE so_name_vc = 'openbase_temp'");
+	$getOBD->execute();
+	$openbase_temp = $getOBD->fetchColumn();
+	
+	# add SenAds OBD entry for openbase_temp DB values
+	$updateOBD = $openbase_temp . $addPath;
+	
+	# update openbase_temp DB values
+	$update = $zdbh->prepare("UPDATE x_settings SET so_value_tx = :updateOBD WHERE so_name_vc = 'openbase_temp'");			 
+	$update->bindParam(':updateOBD', $updateOBD);
+	$update->execute();
+}
+
+installModule()
+
+?>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module>
+    <name>SenAds</name>
+    <version>120</version>
+	<type>user</type>
+	<defaultcat>Reseller</defaultcat>
+    <desc>Add an Advertisement or Banner to the top of your client's pages. Very useful for free hosting services, sposorship, or notifying of server maintenance.</desc>
+    <authorname>TGates</authorname>
+    <authoremail>tgates@sentora.org</authoremail>
+    <authorurl>http://www.sentora.org/</authorurl>
+    <updateurl>https://zppy-repo.mach-hosting.com/repo/senads.xml</updateurl>
+	<ostype>all</ostype>
+</module>

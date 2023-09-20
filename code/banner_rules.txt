@@ -1,0 +1,3 @@
+Banner ads should NOT contain any offensive content.
+Banner ads should be non-obtrusive. (Not too large as to distract from original website.)
+Banner code should not interfere in any way with client's websites.

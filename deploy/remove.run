@@ -1,0 +1,122 @@
+<?php
+/**
+	* Uninstall Script for SenAds module
+	* Version : 1.2.0
+	* Author : TGates
+	* For Sentora v2.0.0 http://www.sentora.org
+	* License http://www.gnu.org/licenses/gpl-3.0.html GPLv3
+ */
+ 
+require_once('cnf/db.php');
+require_once('dryden/db/driver.class.php');
+require_once('dryden/debug/logger.class.php');
+require_once('dryden/runtime/dataobject.class.php');
+require_once('dryden/sys/versions.class.php');
+require_once('dryden/ctrl/options.class.php');
+require_once('dryden/ctrl/auth.class.php');
+require_once('dryden/ctrl/users.class.php');
+require_once('dryden/fs/director.class.php');
+require_once('inc/dbc.inc.php');
+
+function removeModule()
+{
+	global $zdbh, $controller;
+	
+	# path to remove from open_basedir
+	$removePath = ":" . ctrl_options::GetSystemOption('sentora_root') . "modules/senads/pages/";
+
+	# get openbase_temp DB values
+	$getOBD = $zdbh->prepare("SELECT so_value_tx FROM x_settings WHERE so_name_vc = 'openbase_temp'");
+	$getOBD->execute();
+	$openbase_temp = $getOBD->fetchColumn();
+	
+	# remove SenAds OBD entry from openbase_temp DB values
+	$updateOBD = str_replace($removePath, '', $openbase_temp);
+	$updateOBD = trim($updateOBD);
+	
+	# update openbase_temp DB values
+	$update = $zdbh->prepare("UPDATE x_settings SET so_value_tx = :updateOBD WHERE so_name_vc = 'openbase_temp'");			 
+	$update->bindParam(':updateOBD', $updateOBD);
+	$update->execute();
+	
+	# check if table exists
+	$checkT = $zdbh->prepare( "DESCRIBE `x_senads`");
+	
+	if ($checkT->execute())
+	{
+		# remove any senads vhost entries if they exist
+		$stmt = $zdbh->prepare("SELECT sa_rid_in, sa_pid_in FROM x_senads");
+		$stmt->execute();
+		$ids = $stmt->fetchAll();
+		$pids = array_column($ids, 'sa_pid_in');
+		$rids = array_column($ids, 'sa_rid_in');
+
+		if ($pids != '')
+		{
+			foreach($pids as $pid)
+			{
+				# get all clients using selected package
+				$stmt = $zdbh->prepare("SELECT ac_id_pk FROM x_accounts WHERE ac_package_fk = :package_id");
+				$stmt->bindParam(':package_id', $pid, PDO::PARAM_INT);
+				$stmt->execute();
+				$cids = $stmt->fetchAll();
+				$cids = array_column($cids, 'ac_id_pk');
+				
+				# get reseller ID
+				$stmt = $zdbh->prepare("SELECT sa_rid_in FROM x_senads WHERE sa_pid_in = :pid");
+				$stmt->bindParam(':pid', $pid, PDO::PARAM_INT);
+				$stmt->execute();
+				$rid = $stmt->fetch();
+				$rid = $rid['sa_rid_in'];
+		
+				# SenAds custom vhost entry
+				$senAds = "# SenAds - START" . fs_filehandler::NewLine();
+				$senAds .= "php_value auto_prepend_file " . ctrl_options::GetSystemOption('sentora_root') . "modules/senads/pages/" . $rid . "_senads.html" . fs_filehandler::NewLine();
+				$senAds .= "AddType application/x-httpd-php htm" . fs_filehandler::NewLine();
+				$senAds .= "AddType application/x-httpd-php html" . fs_filehandler::NewLine();
+				$senAds .= "# SenAds - END" . fs_filehandler::NewLine();
+				
+				foreach ($cids as $cid)
+				{
+					# get custom vhost entries for client
+					$get_vhosts = $zdbh->prepare("SELECT vh_name_vc FROM x_vhosts WHERE vh_acc_fk = :cid");
+					$get_vhosts->bindParam(':cid', $cid, PDO::PARAM_INT);
+					$get_vhosts->execute();
+					$vhnames = $get_vhosts->fetchAll();
+					$vhnames = array_column($vhnames, 'vh_name_vc');
+
+					foreach ($vhnames as $vhname)
+					{
+						$get_vhost = $zdbh->prepare("SELECT vh_custom_tx FROM x_vhosts WHERE vh_name_vc = :vhname");
+						$get_vhost->bindParam(':vhname', $vhname);
+						$get_vhost->execute();
+						$custom_vh = $get_vhost->fetch(PDO::FETCH_ASSOC);
+						
+						$custom_vh = $custom_vh['vh_custom_tx'];
+
+						# remove SenAds vhost entries
+						$input = str_replace($senAds, '', $custom_vh);
+						$input = trim($input);
+						$input = !empty($input) ? $input : NULL;
+				
+						# update client's custom vhost data
+						$update = $zdbh->prepare("UPDATE x_vhosts SET vh_custom_tx = :input WHERE vh_name_vc = :vhname");
+						$update->bindParam(':input', $input);
+						$update->bindParam(':vhname', $vhname);
+						$update->execute();
+					}
+				}
+			}
+			# set apache to update
+			$sql = "UPDATE x_settings SET so_value_tx = 'true' WHERE so_name_vc = 'apache_changed'";
+			$apache = $zdbh->prepare($sql);
+			$apache->execute();
+		}
+		# remove x_senads table
+		$stmt = $zdbh->prepare("DROP TABLE IF EXISTS x_senads");
+		$stmt->execute();
+	}
+}
+
+removeModule();
+?>
